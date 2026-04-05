@@ -6,3 +6,6 @@
 
 # Windows binaries
 *.exe
+
+#Ignore REPL log files
+repl.log
