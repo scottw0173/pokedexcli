@@ -20,6 +20,15 @@ func main() {
 			continue
 		}
 
-		fmt.Printf("Your command was: %s\n", words[0])
+		commandName := words[0]
+		command, exists := commands[commandName]
+		if exists {
+			err := command.callback(commands)
+			if err != nil {
+				fmt.Println(err)
+			}
+		} else {
+			fmt.Println("Unknown command")
+		}
 	}
 }
