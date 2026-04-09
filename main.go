@@ -27,7 +27,7 @@ func main() {
 		commandName := words[0]
 		command, exists := commands[commandName]
 		if exists {
-			err := command.callback(cfg, cache)
+			err := command.callback(cfg, cache, words)
 			if err != nil {
 				fmt.Println(err)
 			}
