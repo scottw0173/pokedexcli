@@ -54,6 +54,11 @@ func init() {
 			description: "throws Pokeball in an attempt to catch named pokemon and add to user's Pokedex",
 			callback:    commandCatch,
 		},
+		"inspect": {
+			name:        "inspect",
+			description: "lists the stats of any pokemon in the pokedex",
+			callback:    commandInspect,
+		},
 	}
 }
 
@@ -159,6 +164,30 @@ func commandCatch(cfg *config, cache *pokecache.Cache, words []string) error {
 		fmt.Printf("%s was caught!\n", pokemon)
 	} else {
 		fmt.Printf("%s escaped!\n", pokemon)
+	}
+	return nil
+}
+
+func commandInspect(cfg *config, cache *pokecache.Cache, words []string) error {
+	if len(words) < 2 {
+		return fmt.Errorf("please name a Pokemon to inspect")
+	}
+	pokemon := words[1]
+	caught, ok := cfg.pokedex[pokemon]
+	if !ok {
+		fmt.Printf("you have not caught that pokemon\n")
+	} else {
+		fmt.Printf("Name: %s\n", pokemon)
+		fmt.Printf("Height: %d\n", caught.Height)
+		fmt.Printf("Weight: %d\n", caught.Weight)
+		fmt.Println("Stats:")
+		for _, stat := range caught.Stats {
+			fmt.Printf("-%s: %d\n", stat.Stat.Name, stat.BaseStat)
+		}
+		fmt.Println("Types:")
+		for _, attType := range caught.Types {
+			fmt.Printf("-%s\n", attType.Type.Name)
+		}
 	}
 	return nil
 }
