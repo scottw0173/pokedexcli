@@ -59,6 +59,11 @@ func init() {
 			description: "lists the stats of any pokemon in the pokedex",
 			callback:    commandInspect,
 		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "lists the pokemon currently in the pokedex",
+			callback:    commandPokedex,
+		},
 	}
 }
 
@@ -151,7 +156,10 @@ func commandCatch(cfg *config, cache *pokecache.Cache, words []string) error {
 	}
 
 	pokemon := words[1]
-	stats, _ := fetchPokemonInfo(pokemon, cache)
+	stats, err := fetchPokemonInfo(pokemon, cache)
+	if err != nil {
+		return fmt.Errorf("That pokemon doesn't exist!")
+	}
 
 	catchDifficulty := stats.BaseExperience
 	playerExperience := len(cfg.pokedex)
@@ -162,6 +170,7 @@ func commandCatch(cfg *config, cache *pokecache.Cache, words []string) error {
 	if successThreshold > catchDifficulty {
 		cfg.pokedex[pokemon] = stats
 		fmt.Printf("%s was caught!\n", pokemon)
+		fmt.Println("You may now inspect it with the inspect command")
 	} else {
 		fmt.Printf("%s escaped!\n", pokemon)
 	}
@@ -188,6 +197,17 @@ func commandInspect(cfg *config, cache *pokecache.Cache, words []string) error {
 		for _, attType := range caught.Types {
 			fmt.Printf("-%s\n", attType.Type.Name)
 		}
+	}
+	return nil
+}
+
+func commandPokedex(cfg *config, cache *pokecache.Cache, words []string) error {
+	pokedex := cfg.pokedex
+	if len(pokedex) == 0 {
+		fmt.Println("You haven't caught any pokemon yet!")
+	}
+	for _, pokemon := range pokedex {
+		fmt.Printf("- %s\n", pokemon.Name)
 	}
 	return nil
 }
