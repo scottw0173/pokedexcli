@@ -37,7 +37,6 @@ func fetchLocations(url string, cache *pokecache.Cache) (Location, error) {
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
-	cache.Add(url, body)
 
 	if err != nil {
 		return Location{}, fmt.Errorf("Error reading body: %w", err)
@@ -46,6 +45,8 @@ func fetchLocations(url string, cache *pokecache.Cache) (Location, error) {
 	if res.StatusCode > 299 {
 		return Location{}, fmt.Errorf("Response failed with status code: %d and \nBody: %s", res.StatusCode, body)
 	}
+
+	cache.Add(url, body)
 
 	location := Location{}
 	err = json.Unmarshal(body, &location)
