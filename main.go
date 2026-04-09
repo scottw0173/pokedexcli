@@ -4,11 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"pokedexcli/internal/pokecache"
+	"time"
 )
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	cfg := &config{}
+	cache := pokecache.NewCache(5 * time.Second)
 
 	for {
 		fmt.Print("Pokedex > ")
@@ -24,7 +27,7 @@ func main() {
 		commandName := words[0]
 		command, exists := commands[commandName]
 		if exists {
-			err := command.callback(cfg)
+			err := command.callback(cfg, cache)
 			if err != nil {
 				fmt.Println(err)
 			}

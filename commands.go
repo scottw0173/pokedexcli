@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"pokedexcli/internal/pokecache"
 )
 
 type config struct {
@@ -14,7 +15,7 @@ type config struct {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config) error
+	callback    func(*config, *pokecache.Cache) error
 }
 
 var commands map[string]cliCommand
@@ -44,13 +45,13 @@ func init() {
 	}
 }
 
-func commandExit(cfg *config) error {
+func commandExit(cfg *config, cache *pokecache.Cache) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(cfg *config) error {
+func commandHelp(cfg *config, cache *pokecache.Cache) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
 	fmt.Println()
@@ -60,7 +61,7 @@ func commandHelp(cfg *config) error {
 	return nil
 }
 
-func commandMap(cfg *config) error {
+func commandMap(cfg *config, cache *pokecache.Cache) error {
 	var url string
 	if !cfg.hasFetched {
 		url = "https://pokeapi.co/api/v2/location-area/"
@@ -71,7 +72,7 @@ func commandMap(cfg *config) error {
 		url = cfg.next
 	}
 
-	locations, err := fetchLocations(url)
+	locations, err := fetchLocations(url, cache)
 	if err != nil {
 		return err
 	}
@@ -90,12 +91,12 @@ func commandMap(cfg *config) error {
 	return nil
 }
 
-func commandMapBack(cfg *config) error {
+func commandMapBack(cfg *config, cache *pokecache.Cache) error {
 	if cfg.previous == "" {
 		fmt.Println("You're on the first page")
 		return nil
 	}
-	locations, err := fetchLocations(cfg.previous)
+	locations, err := fetchLocations(cfg.previous, cache)
 	if err != nil {
 		return err
 	}

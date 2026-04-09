@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"pokedexcli/internal/pokecache"
 )
 
 type Location struct {
@@ -17,7 +18,17 @@ type Location struct {
 	} `json:"results"`
 }
 
-func fetchLocations(url string) (Location, error) {
+func fetchLocations(url string, cache *pokecache.Cache) (Location, error) {
+	data, ok := cache.Get(url)
+	if ok {
+		location := Location{}
+		err := json.Unmarshal(data, &location)
+		if err != nil {
+			return Location{}, err
+		}
+		return location, nil
+	}
+
 	res, err := http.Get(url)
 	if err != nil {
 		return Location{}, fmt.Errorf("Error calling API: %w", err)
@@ -26,6 +37,7 @@ func fetchLocations(url string) (Location, error) {
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
+	cache.Add(url, body)
 
 	if err != nil {
 		return Location{}, fmt.Errorf("Error reading body: %w", err)
