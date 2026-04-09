@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"pokedexcli/internal/pokecache"
 )
@@ -10,6 +11,7 @@ type config struct {
 	next       string
 	previous   string
 	hasFetched bool
+	pokedex    map[string]PokemonInfo
 }
 
 type cliCommand struct {
@@ -46,6 +48,11 @@ func init() {
 			name:        "explore",
 			description: "lists pokemon found in area typed after the word 'explore'",
 			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "catch",
+			description: "throws Pokeball in an attempt to catch named pokemon and add to user's Pokedex",
+			callback:    commandCatch,
 		},
 	}
 }
@@ -129,6 +136,29 @@ func commandExplore(cfg *config, cache *pokecache.Cache, area []string) error {
 	areaInfo, _ := fetchPokemonInArea(areaName, cache)
 	for _, pokemon := range areaInfo.PokemonEncounters {
 		fmt.Println(pokemon.Pokemon.Name)
+	}
+	return nil
+}
+
+func commandCatch(cfg *config, cache *pokecache.Cache, words []string) error {
+	if len(words) < 2 {
+		return fmt.Errorf("please name a Pokemon to try to catch")
+	}
+
+	pokemon := words[1]
+	stats, _ := fetchPokemonInfo(pokemon, cache)
+
+	catchDifficulty := stats.BaseExperience
+	playerExperience := len(cfg.pokedex)
+	randomness := rand.Intn(stats.BaseExperience)
+
+	fmt.Printf("Throwing a Pokeball at %s...\n", pokemon)
+	successThreshold := randomness + ((playerExperience + 1) * 30)
+	if successThreshold > catchDifficulty {
+		cfg.pokedex[pokemon] = stats
+		fmt.Printf("%s was caught!\n", pokemon)
+	} else {
+		fmt.Printf("%s escaped!\n", pokemon)
 	}
 	return nil
 }

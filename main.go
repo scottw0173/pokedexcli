@@ -10,7 +10,9 @@ import (
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
-	cfg := &config{}
+	cfg := &config{
+		pokedex: make(map[string]PokemonInfo),
+	}
 	cache := pokecache.NewCache(5 * time.Second)
 
 	for {

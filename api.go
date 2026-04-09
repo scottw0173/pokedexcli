@@ -58,55 +58,11 @@ func fetchLocations(url string, cache *pokecache.Cache) (Location, error) {
 }
 
 type AreaInfo struct {
-	EncounterMethodRates []struct {
-		EncounterMethod struct {
-			Name string `json:"name"`
-			URL  string `json:"url"`
-		} `json:"encounter_method"`
-		VersionDetails []struct {
-			Rate    int `json:"rate"`
-			Version struct {
-				Name string `json:"name"`
-				URL  string `json:"url"`
-			} `json:"version"`
-		} `json:"version_details"`
-	} `json:"encounter_method_rates"`
-	GameIndex int `json:"game_index"`
-	ID        int `json:"id"`
-	Location  struct {
-		Name string `json:"name"`
-		URL  string `json:"url"`
-	} `json:"location"`
-	Name  string `json:"name"`
-	Names []struct {
-		Language struct {
-			Name string `json:"name"`
-			URL  string `json:"url"`
-		} `json:"language"`
-		Name string `json:"name"`
-	} `json:"names"`
 	PokemonEncounters []struct {
 		Pokemon struct {
 			Name string `json:"name"`
 			URL  string `json:"url"`
 		} `json:"pokemon"`
-		VersionDetails []struct {
-			EncounterDetails []struct {
-				Chance          int   `json:"chance"`
-				ConditionValues []any `json:"condition_values"`
-				MaxLevel        int   `json:"max_level"`
-				Method          struct {
-					Name string `json:"name"`
-					URL  string `json:"url"`
-				} `json:"method"`
-				MinLevel int `json:"min_level"`
-			} `json:"encounter_details"`
-			MaxChance int `json:"max_chance"`
-			Version   struct {
-				Name string `json:"name"`
-				URL  string `json:"url"`
-			} `json:"version"`
-		} `json:"version_details"`
 	} `json:"pokemon_encounters"`
 }
 
@@ -146,4 +102,52 @@ func fetchPokemonInArea(area string, cache *pokecache.Cache) (AreaInfo, error) {
 	}
 
 	return areainfo, nil
+}
+
+type PokemonInfo struct {
+	Name           string `json:"name"`
+	BaseExperience int    `json:"base_experience"`
+	Types          []struct {
+		Type struct {
+			Name string `json:"name"`
+		} `json:"type"`
+	} `json:"types"`
+}
+
+func fetchPokemonInfo(name string, cache *pokecache.Cache) (PokemonInfo, error) {
+	const baseURL = "https://pokeapi.co/api/v2/pokemon/"
+	fullURL := baseURL + name + "/"
+
+	var data []byte
+	entry, ok := cache.Get(fullURL)
+	if ok {
+		data = entry
+	} else {
+		res, err := http.Get(fullURL)
+		if err != nil {
+			return PokemonInfo{}, fmt.Errorf("Error calling API: %w", err)
+		}
+
+		defer res.Body.Close()
+
+		body, err := io.ReadAll(res.Body)
+
+		if err != nil {
+			return PokemonInfo{}, fmt.Errorf("Error reading body: %w", err)
+		}
+
+		if res.StatusCode > 299 {
+			return PokemonInfo{}, fmt.Errorf("Response failed with status code: %d and \nBody: %s", res.StatusCode, body)
+		}
+
+		cache.Add(fullURL, body)
+		data = body
+	}
+	pokemonStats := PokemonInfo{}
+	err := json.Unmarshal(data, &pokemonStats)
+	if err != nil {
+		return PokemonInfo{}, err
+	}
+
+	return pokemonStats, nil
 }
